@@ -2,7 +2,7 @@ import telebot
 from datetime import datetime
 import sqlite3
 
-bot = telebot.TeleBot("")
+bot = telebot.TeleBot("5998208285:AAGuVb7MHN3Zg-4j-ZjnRpukTFMhr8yOAoA")
 
 # Функция для создания базы данных, если она еще не создана
 def create_db():
@@ -38,6 +38,8 @@ def start(message):
     btn1 = telebot.types.KeyboardButton("Добавить пациента")
     btn2 = telebot.types.KeyboardButton("Пациенты за сегодня")
     markup.add(btn1, btn2)
+    btn3 = telebot.types.KeyboardButton("Количество пациентов за неделю")
+    markup.add(btn1, btn2, btn3)
     bot.send_message(message.chat.id, "Главное меню", reply_markup=markup)
 
 # Переменные для временного хранения данных пациента
@@ -101,7 +103,34 @@ def todays_patients(message):
         response = "Пациенты за сегодня:\n" + "\n".join([f"{p[0]} {p[1]} {p[2]}" for p in patients])
     else:
         response = "Сегодня пациентов не было."
+
+# Пациенты за каждый день недели
+@bot.message_handler(func=lambda message: message.text == "Количество пациентов за неделю")
+def patients_per_weekday(message):
+    conn = sqlite3.connect('patients.db')
+    cursor = conn.cursor()
+
+    # Запрос всех дат посещений из базы данных
+    cursor.execute("SELECT visit_date FROM patients")
+    patients = cursor.fetchall()
+
+    # Создаем словарь для подсчета пациентов по дням недели
+    weekdays = {0: 'Понедельник', 1: 'Вторник', 2: 'Среда', 3: 'Четверг', 4: 'Пятница', 5: 'Суббота', 6: 'Воскресенье'}
+    weekday_counts = {day: 0 for day in weekdays.values()}
+
+    # Проходим по всем пациентам и считаем количество по дням недели
+    for patient in patients:
+        visit_date = datetime.strptime(patient[0], "%Y-%m-%d")
+        weekday = visit_date.weekday()  # Получаем номер дня недели (0 - понедельник, 6 - воскресенье)
+        weekday_name = weekdays[weekday]
+        weekday_counts[weekday_name] += 1
+
+    # Формируем ответ
+    response = "Количество пациентов за каждый день недели:\n"
+    for day, count in weekday_counts.items():
+        response += f"{day}: {count}\n"
+
+    # Отправляем ответ и закрываем соединение с базой данных
     bot.send_message(message.chat.id, response)
     conn.close()
-
 bot.polling()
