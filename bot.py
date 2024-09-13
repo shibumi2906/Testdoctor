@@ -2,7 +2,7 @@ import telebot
 from datetime import datetime
 import sqlite3
 
-bot = telebot.TeleBot("5998208285:AAGuVb7MHN3Zg-4j-ZjnRpukTFMhr8yOAoA")
+bot = telebot.TeleBot("Ваш токен телеграмм")
 
 # Функция для создания базы данных, если она еще не создана
 def create_db():
